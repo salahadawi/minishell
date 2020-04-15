@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/10 12:20:24 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/15 17:14:58 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/15 21:08:19 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,15 @@
 # include <signal.h>
 # include <fcntl.h>
 
+struct s_env;
+
+typedef int builtin_func (struct s_env*, char**);
+
 typedef struct	s_env
 {
-	char		**envp;
+	char			**envp;
+	char			**builtin_names;
+	builtin_func	**builtin_funcs;
 }				t_env;
 
 #endif
