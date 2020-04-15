@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/15 21:41:03 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/15 22:40:18 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -145,7 +145,7 @@ char	**split_line_args(char *line)
 	char **args;
 
 	args = (char**)ft_memalloc(sizeof(args));
-	args = ft_strsplit(line, ' ');
+	args = ft_strsplitws(line);
 	return (args);
 }
 
@@ -177,6 +177,8 @@ char	*find_filepath(t_env *env, char *filename)
 	i = 0;
 	while (paths[i])
 	{
+		if (ft_strstr(filename, paths[i]))
+			return (filename);
 		filepath = (char*)ft_memalloc(ft_strlen(paths[i]) + filename_len + 2);
 		ft_strcpy(filepath, paths[i]);
 		ft_strcat(filepath, "/");
@@ -261,8 +263,6 @@ void	handle_expansion(t_env *env, char **args)
 	// Code this next to expand $env vars and ~ into args, by making new
 	// string and changing $(foo)/~ to value it contains
 }
-
-
 
 int		handle_builtins(t_env *env, char **args)
 {
