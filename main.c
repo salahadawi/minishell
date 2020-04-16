@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 15:05:13 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 15:19:34 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -246,6 +246,21 @@ void	update_pwd(t_env *env)
 	free(path);
 }
 
+int		zhs_cd(t_env *env, char **args)
+{
+	char *oldpwd;
+	
+	oldpwd = store_oldpwd(env);
+	if (chdir(args[0]) == -1)
+	{
+		free(oldpwd);
+		return (0);
+	}
+	update_pwd(env);
+	update_oldpwd(env, oldpwd);
+	return (1);
+}
+
 int		builtin_cd(t_env *env, char **args)
 {
 	char *oldpwd;
@@ -479,7 +494,7 @@ int		handle_builtins(t_env *env, char **args)
 			return (env->builtin_funcs[i](env, args));
 		i++;
 	}
-	return (0);
+	return (zhs_cd(env, args));
 }
 
 int		check_cmd(t_env *env, char **args)
