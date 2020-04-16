@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 13:24:48 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 13:44:46 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,6 +141,7 @@ int		builtin_setenv(t_env *env, char **args)
 		if (ft_strchr(args[i], '='))
 		{
 			add_env(env, args[i]);
+			print_error(ft_sprintf("%s added to enviroment!", args[i]));
 		}
 		else
 		{
@@ -152,6 +153,37 @@ int		builtin_setenv(t_env *env, char **args)
 	return (1);
 }
 
+int		delete_env(t_env *env, char *arg)
+{
+	char **new_envp;
+	int		len;
+	int		i;
+	int		deleted;
+
+	new_envp = (char**)ft_memalloc(sizeof(char*)
+	* (count_env_amount(env->envp)));
+	len = ft_strlen(arg);
+	deleted = 0;
+	i = 0;
+	while (env->envp[i])
+	{
+		if (!ft_strnequ(env->envp[i], arg, len))
+			new_envp[i - deleted] = env->envp[i];
+		else
+			deleted = 1;
+		i++;
+	}
+	if (deleted)
+	{
+		new_envp[i - deleted] = NULL;
+		free_envp(env->envp);
+		env->envp = new_envp;
+		return (1);
+	}
+	free_envp(new_envp);
+	return (0);
+}
+
 int		builtin_unsetenv(t_env *env, char **args)
 {
 	int i;
@@ -159,16 +191,10 @@ int		builtin_unsetenv(t_env *env, char **args)
 	i = 1;
 	while (args[i])
 	{
-		if (ft_strchr(args[i], '='))
-		{
-			add_env(env, args[i]);
-			
-		}
+		if (delete_env(env, args[i]))
+			print_error(ft_sprintf("%s deleted from enviroment!", args[i]));
 		else
-		{
-			print_error(ft_sprintf("'%s' could not be added.", args[i]));
-			print_error(ft_sprintf("Correct format: NAME=value"));
-		}
+			print_error(ft_sprintf("'%s' not found.", args[i]));
 		i++;
 	}
 	return (1);
@@ -179,7 +205,7 @@ void	init_builtins(t_env *env)
 	char *builtin_names;
 	int count;
 
-	builtin_names = "echo exit env setenv";
+	builtin_names = "echo exit env setenv unsetenv";
 	env->builtin_names = ft_strsplit(builtin_names, ' ');
 	count = 0;
 	while (env->builtin_names[count])
@@ -190,6 +216,7 @@ void	init_builtins(t_env *env)
 	env->builtin_funcs[1] = &builtin_exit;
 	env->builtin_funcs[2] = &builtin_env;
 	env->builtin_funcs[3] = &builtin_setenv;
+	env->builtin_funcs[4] = &builtin_unsetenv;
 }
 
 void	init_env(t_env **env, char *envp[])
