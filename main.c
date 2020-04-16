@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 17:47:21 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 18:05:29 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,7 +193,10 @@ int		delete_env(t_env *env, char *arg)
 		if (!ft_strnequ(env->envp[i], arg, len))
 			new_envp[i - deleted] = env->envp[i];
 		else
+		{
+			free(env->envp[i]);
 			deleted = 1;
+		}
 		i++;
 	}
 	if (deleted)
@@ -265,18 +268,25 @@ char	*store_oldpwd(t_env *env)
 
 void	update_oldpwd(t_env *env, char *path)
 {
-	add_env(env, ft_strjoin("OLDPWD=", path));
+	char *env_var;
+
+	env_var = ft_strjoin("OLDPWD=", path);
+	add_env(env, env_var);
 	free(path);
+	free(env_var);
 }
 
 void	update_pwd(t_env *env)
 {
 	char *path;
+	char *env_var;
 
 	path = (char*)ft_memalloc(PATH_MAX + 1);
 	getcwd(path, PATH_MAX);
-	add_env(env, ft_strjoin("PWD=", path));
+	env_var = ft_strjoin("PWD=", path);
+	add_env(env, env_var);
 	free(path);
+	free(env_var);
 }
 
 int		shortcut_cd(t_env *env, char **args)
@@ -397,9 +407,11 @@ char	*find_filepath(t_env *env, char *filename)
 			return (filepath);
 
 		}
+		free(paths[i]);
 		free(filepath);
 		i++;
 	}
+	free(paths);
 	return (NULL);
 }
 
@@ -423,6 +435,7 @@ int		exec_cmd(t_env *env, char **args)
 		if (!(filepath = find_filepath(env, args[0])))
 		{
 			print_error(ft_sprintf("Command not found: '%s'", args[0]));
+			free(filepath);
 			exit(1);
 		}
 		else
@@ -475,6 +488,7 @@ char	*expand_tilde(t_env *env, char *str, char *ptr)
 		len = 1;
 		expanded_str = ft_strjoinfree(expanded_str, ft_strdup(ptr + len));
 	}
+	free(str);
 	return (expanded_str);
 }
 
@@ -489,6 +503,7 @@ char	*expand_dollar(t_env *env, char *str, char *ptr)
 	expanded_str = ft_strjoinfree(ft_strsub(str, 0, len), value);
 	len = get_env_name_len(ptr + 1);
 	expanded_str = ft_strjoinfree(expanded_str, ft_strdup(ptr + 1 + len));
+	free(str);
 	return (expanded_str);
 }
 
