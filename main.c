@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/15 22:40:18 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 13:24:48 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,15 +78,101 @@ int		builtin_env(t_env *env, char **args)
 		ft_printf("%s\n", env->envp[i++]);
 }
 
-/*int		builtin_setenv(t_env *env, char **args)
+int		check_names_match(char *var1, char *var2)
+{
+	int i;
+
+	i = 0;
+	while (var1[i] && var2[i])
+	{
+		if (var1[i] != var2[i])
+			return (0);
+		if (var1[i] == '=' && var2[i] == '=')
+			return (1);
+		i++;
+	}
+	return (0);
+}
+
+void	free_envp(char **envp)
+{
+	int i;
+
+	i = 0;
+	//while (envp[i])
+		//free(envp[i++]);
+	free(envp);
+}
+
+void	add_env(t_env *env, char *arg)
 {
 	char **new_envp;
 	int i;
 
+	new_envp = (char**)ft_memalloc(sizeof(char*)
+	* (count_env_amount(env->envp) + 2));
 	i = 0;
 	while (env->envp[i])
-		if (ft_strequ(envp[i], args[0])
-}*/
+	{
+		if (check_names_match(env->envp[i], arg))
+		{
+			free(env->envp[i]);
+			env->envp[i] = ft_strdup(arg);
+			free_envp(new_envp);
+			return ;
+		}
+		else
+			new_envp[i] = env->envp[i];
+		i++;
+	}
+	new_envp[i] = ft_strdup(arg);
+	new_envp[i + 1] = NULL;
+	free_envp(env->envp);
+	env->envp = new_envp;
+}
+
+int		builtin_setenv(t_env *env, char **args)
+{
+	int i;
+
+	i = 1;
+	while (args[i])
+	{
+		if (ft_strchr(args[i], '='))
+		{
+			add_env(env, args[i]);
+		}
+		else
+		{
+			print_error(ft_sprintf("'%s' could not be added.", args[i]));
+			print_error(ft_sprintf("Correct format: NAME=value"));
+		}
+		i++;
+	}
+	return (1);
+}
+
+int		builtin_unsetenv(t_env *env, char **args)
+{
+	int i;
+
+	i = 1;
+	while (args[i])
+	{
+		if (ft_strchr(args[i], '='))
+		{
+			add_env(env, args[i]);
+			
+		}
+		else
+		{
+			print_error(ft_sprintf("'%s' could not be added.", args[i]));
+			print_error(ft_sprintf("Correct format: NAME=value"));
+		}
+		i++;
+	}
+	return (1);
+}
 
 void	init_builtins(t_env *env)
 {
@@ -98,11 +184,12 @@ void	init_builtins(t_env *env)
 	count = 0;
 	while (env->builtin_names[count])
 		count++;
-	env->builtin_funcs = (builtin_func**)ft_memalloc(sizeof(builtin_func*) * count);
+	env->builtin_funcs = (builtin_func**)ft_memalloc(sizeof(builtin_func*)
+	* count);
 	env->builtin_funcs[0] = &builtin_echo;
 	env->builtin_funcs[1] = &builtin_exit;
 	env->builtin_funcs[2] = &builtin_env;
-	//env->builtin_funcs[3] = &builtin_setenv;
+	env->builtin_funcs[3] = &builtin_setenv;
 }
 
 void	init_env(t_env **env, char *envp[])
@@ -154,14 +241,19 @@ char	*get_env_value(t_env *env, char *name)
 	int len;
 	int i;
 
+	name = ft_strsubchar(name, 0, '$');
 	len = ft_strlen(name);
 	i = 0;
 	while (env->envp[i])
 	{
 		if (ft_strnequ(env->envp[i], name, len) && env->envp[i][len] == '=')
+		{
+			free(name);
 			return (ft_strchr(env->envp[i], '=') + 1);
+		}
 		i++;
 	}
+	free(name);
 	return ("");
 }
 
@@ -175,14 +267,15 @@ char	*find_filepath(t_env *env, char *filename)
 	paths = ft_strsplit(get_env_value(env, "PATH"), ':');
 	filename_len = ft_strlen(filename);
 	i = 0;
+	if (access(filename, F_OK) != -1)
+			return (filename);
 	while (paths[i])
 	{
-		if (ft_strstr(filename, paths[i]))
-			return (filename);
 		filepath = (char*)ft_memalloc(ft_strlen(paths[i]) + filename_len + 2);
 		ft_strcpy(filepath, paths[i]);
 		ft_strcat(filepath, "/");
 		ft_strcat(filepath, filename);
+		//CHECK IF PROGRAM CAN BE EXECUTED, IF NOT DISPLAY PERMISSION ERROR
 		if (access(filepath, F_OK) != -1)
 			return (filepath);
 		free(filepath);
@@ -223,25 +316,57 @@ int		exec_cmd(t_env *env, char **args)
 	return (1);
 }
 
-char	*expand(t_env *env, char *ptr)
+int		find_size_pointers(char *str, char *ptr)
 {
-	char *expanded_str;
+	int i;
+
+	i = 0;
+	while (str[i])
+	{
+		if (str[i] == *ptr)
+			return (i);
+		i++;
+	}
+	return (-1);
+}
+
+int		get_env_name_len(char *str)
+{
+	int i;
+
+	i = 0;
+	while (str[i] && str[i] != '$')
+		i++;
+	return (i);
+}
+
+char	*expand(t_env *env, char *str, char *ptr)
+{
+	char	*expanded_str;
+	char	*value;
+	int		len;
 
 	if (*ptr == '~')
 		expanded_str = ft_strjoin(get_env_value(env, "HOME"), ptr + 1);
 	else if (*ptr == '$')
-		expanded_str = get_env_value(env, ptr + 1);
+	{
+		len = find_size_pointers(str, ptr);
+		value = ft_strdup(get_env_value(env, ptr + 1));
+		expanded_str = ft_strjoinfree(ft_strsub(str, 0, len), value);
+		len = get_env_name_len(ptr + 1);
+		expanded_str = ft_strjoinfree(expanded_str, ft_strdup(ptr + 1 + len));
+	}
 	return (expanded_str);
 }
 
-char	*find_expansion(const char *s)
+char	*find_dollar(const char *s)
 {
 	int i;
 
 	i = 0;
 	while (s[i])
 	{
-		if (s[i] == '$' || s[i] == '~')
+		if (s[i] == '$')
 			return ((char*)&s[i]);
 		i++;
 	}
@@ -256,12 +381,22 @@ void	handle_expansion(t_env *env, char **args)
 	i = 0;
 	while (args[i])
 	{
-		if ((ptr = find_expansion(args[i])))
-			args[i] = expand(env, ptr);
+		if (args[i][0] == '~')
+			args[i] = expand(env, args[i], &args[i][0]);
 		i++;
+	}
+	i = 0;
+	while (args[i])
+	{
+		if ((ptr = find_dollar(args[i])) && ptr + 1)
+			args[i] = expand(env, args[i], ptr);
+		else
+			i++;
 	}
 	// Code this next to expand $env vars and ~ into args, by making new
 	// string and changing $(foo)/~ to value it contains
+	// HANDLE ~ AND $ SEPERATELY, FIRST ~ IN STRING BEGINNING, THEN $ POSSIBLY
+	// IN SAME STRING. STRING CAN ALSO CONTAIN SEVERAL $, EX: "$HOME$HOME"
 }
 
 int		handle_builtins(t_env *env, char **args)
