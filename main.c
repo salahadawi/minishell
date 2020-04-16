@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 15:19:34 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 16:50:48 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,6 +153,29 @@ int		builtin_setenv(t_env *env, char **args)
 	return (1);
 }
 
+int		shortcut_setenv(t_env *env, char **args)
+{
+	int i;
+
+	i = 0;
+	while (args[i])
+	{
+		if (!ft_strchr(args[i++], '='))
+			return (0);
+	}
+	i = 0;
+	while (args[i])
+	{
+		if (ft_strchr(args[i], '='))
+		{
+			add_env(env, args[i]);
+			print_error(ft_sprintf("%s added to enviroment!", args[i]));
+		}
+		i++;
+	}
+	return (1);
+}
+
 int		delete_env(t_env *env, char *arg)
 {
 	char **new_envp;
@@ -200,12 +223,22 @@ int		builtin_unsetenv(t_env *env, char **args)
 	return (1);
 }
 
+char	*strsub_alphanumeric_underscore(char *str)
+{
+	int i;
+
+	i = 0;
+	while (str[i] && (ft_isalnum(str[i]) || str[i] == '_'))
+		i++;
+	return (ft_strsub(str, 0, i));
+}
+
 char	*get_env_value(t_env *env, char *name)
 {
 	int len;
 	int i;
 
-	name = ft_strsubchar(name, 0, '$');
+	name = strsub_alphanumeric_underscore(name);
 	len = ft_strlen(name);
 	i = 0;
 	while (env->envp[i])
@@ -246,7 +279,7 @@ void	update_pwd(t_env *env)
 	free(path);
 }
 
-int		zhs_cd(t_env *env, char **args)
+int		shortcut_cd(t_env *env, char **args)
 {
 	char *oldpwd;
 	
@@ -419,29 +452,44 @@ int		get_env_name_len(char *str)
 	int i;
 
 	i = 0;
-	while (str[i] && str[i] != '$')
+	while (str[i] && (ft_isalnum(str[i]) || str[i] == '_'))
 		i++;
 	return (i);
 }
 
-char	*expand(t_env *env, char *str, char *ptr)
+char	*expand_tilde(t_env *env, char *str, char *ptr)
 {
 	char	*expanded_str;
 	char	*value;
 	int		len;
 
-	if (*ptr == '~')
+	if (ptr == str)
 		expanded_str = ft_strjoin(get_env_value(env, "HOME"), ptr + 1);
-	else if (*ptr == '$')
+	else
 	{
 		len = find_size_pointers(str, ptr);
-		value = ft_strdup(get_env_value(env, ptr + 1));
+		value = ft_strdup(get_env_value(env, "HOME"));
 		expanded_str = ft_strjoinfree(ft_strsub(str, 0, len), value);
-		len = get_env_name_len(ptr + 1);
-		expanded_str = ft_strjoinfree(expanded_str, ft_strdup(ptr + 1 + len));
+		len = 1;
+		expanded_str = ft_strjoinfree(expanded_str, ft_strdup(ptr + len));
 	}
 	return (expanded_str);
 }
+
+char	*expand_dollar(t_env *env, char *str, char *ptr)
+{
+	char	*expanded_str;
+	char	*value;
+	int		len;
+
+	len = find_size_pointers(str, ptr);
+	value = ft_strdup(get_env_value(env, ptr + 1));
+	expanded_str = ft_strjoinfree(ft_strsub(str, 0, len), value);
+	len = get_env_name_len(ptr + 1);
+	expanded_str = ft_strjoinfree(expanded_str, ft_strdup(ptr + 1 + len));
+	return (expanded_str);
+}
+
 
 char	*find_dollar(const char *s)
 {
@@ -466,14 +514,16 @@ void	handle_expansion(t_env *env, char **args)
 	while (args[i])
 	{
 		if (args[i][0] == '~')
-			args[i] = expand(env, args[i], &args[i][0]);
+			args[i] = expand_tilde(env, args[i], &args[i][0]);
+		if ((ptr = ft_strchr(args[i], '~')))
+			args[i] = expand_tilde(env, args[i], ptr);
 		i++;
 	}
 	i = 0;
 	while (args[i])
 	{
 		if ((ptr = find_dollar(args[i])) && ptr + 1)
-			args[i] = expand(env, args[i], ptr);
+			args[i] = expand_dollar(env, args[i], ptr);
 		else
 			i++;
 	}
@@ -481,6 +531,15 @@ void	handle_expansion(t_env *env, char **args)
 	// string and changing $(foo)/~ to value it contains
 	// HANDLE ~ AND $ SEPERATELY, FIRST ~ IN STRING BEGINNING, THEN $ POSSIBLY
 	// IN SAME STRING. STRING CAN ALSO CONTAIN SEVERAL $, EX: "$HOME$HOME"
+}
+
+int		handle_shortcuts(t_env *env, char **args)
+{
+	if (shortcut_cd(env, args))
+		return (1);
+	if (shortcut_setenv(env, args))
+		return (1);
+	return (0);
 }
 
 int		handle_builtins(t_env *env, char **args)
@@ -494,7 +553,7 @@ int		handle_builtins(t_env *env, char **args)
 			return (env->builtin_funcs[i](env, args));
 		i++;
 	}
-	return (zhs_cd(env, args));
+	return (handle_shortcuts(env, args));
 }
 
 int		check_cmd(t_env *env, char **args)
