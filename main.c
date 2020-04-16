@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 16:50:48 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 17:08:24 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -385,7 +385,11 @@ char	*find_filepath(t_env *env, char *filename)
 	filename_len = ft_strlen(filename);
 	i = 0;
 	if (access(filename, F_OK) != -1)
-			return (filename);
+	{
+		if (access(filepath, X_OK) == -1)
+			print_error(ft_sprintf("%s: Permission denied.", filename));
+		return (filename);
+	}
 	while (paths[i])
 	{
 		filepath = (char*)ft_memalloc(ft_strlen(paths[i]) + filename_len + 2);
@@ -394,7 +398,12 @@ char	*find_filepath(t_env *env, char *filename)
 		ft_strcat(filepath, filename);
 		//CHECK IF PROGRAM CAN BE EXECUTED, IF NOT DISPLAY PERMISSION ERROR
 		if (access(filepath, F_OK) != -1)
+		{
+			if (access(filepath, X_OK) == -1)
+				print_error(ft_sprintf("%s: Permission denied.", filepath));
 			return (filepath);
+
+		}
 		free(filepath);
 		i++;
 	}
