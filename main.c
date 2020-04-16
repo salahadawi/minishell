@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 13:44:46 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 15:05:13 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -200,12 +200,74 @@ int		builtin_unsetenv(t_env *env, char **args)
 	return (1);
 }
 
+char	*get_env_value(t_env *env, char *name)
+{
+	int len;
+	int i;
+
+	name = ft_strsubchar(name, 0, '$');
+	len = ft_strlen(name);
+	i = 0;
+	while (env->envp[i])
+	{
+		if (ft_strnequ(env->envp[i], name, len) && env->envp[i][len] == '=')
+		{
+			free(name);
+			return (ft_strchr(env->envp[i], '=') + 1);
+		}
+		i++;
+	}
+	free(name);
+	return ("");
+}
+
+char	*store_oldpwd(t_env *env)
+{
+	char *path;
+
+	path = (char*)ft_memalloc(PATH_MAX + 1);
+	getcwd(path, PATH_MAX);
+	return (path);
+}
+
+void	update_oldpwd(t_env *env, char *path)
+{
+	add_env(env, ft_strjoin("OLDPWD=", path));
+	free(path);
+}
+
+void	update_pwd(t_env *env)
+{
+	char *path;
+
+	path = (char*)ft_memalloc(PATH_MAX + 1);
+	getcwd(path, PATH_MAX);
+	add_env(env, ft_strjoin("PWD=", path));
+	free(path);
+}
+
+int		builtin_cd(t_env *env, char **args)
+{
+	char *oldpwd;
+	
+	oldpwd = store_oldpwd(env);
+	if (!args[1])
+		chdir(get_env_value(env, "HOME"));
+	else if (ft_strequ(args[1], "-"))
+		chdir(get_env_value(env, "OLDPWD"));
+	else
+		chdir(args[1]);
+	update_pwd(env);
+	update_oldpwd(env, oldpwd);
+	return (1);
+}
+
 void	init_builtins(t_env *env)
 {
 	char *builtin_names;
 	int count;
 
-	builtin_names = "echo exit env setenv unsetenv";
+	builtin_names = "echo exit env setenv unsetenv cd";
 	env->builtin_names = ft_strsplit(builtin_names, ' ');
 	count = 0;
 	while (env->builtin_names[count])
@@ -217,6 +279,7 @@ void	init_builtins(t_env *env)
 	env->builtin_funcs[2] = &builtin_env;
 	env->builtin_funcs[3] = &builtin_setenv;
 	env->builtin_funcs[4] = &builtin_unsetenv;
+	env->builtin_funcs[5] = &builtin_cd;
 }
 
 void	init_env(t_env **env, char *envp[])
@@ -261,27 +324,6 @@ char	**split_line_args(char *line)
 	args = (char**)ft_memalloc(sizeof(args));
 	args = ft_strsplitws(line);
 	return (args);
-}
-
-char	*get_env_value(t_env *env, char *name)
-{
-	int len;
-	int i;
-
-	name = ft_strsubchar(name, 0, '$');
-	len = ft_strlen(name);
-	i = 0;
-	while (env->envp[i])
-	{
-		if (ft_strnequ(env->envp[i], name, len) && env->envp[i][len] == '=')
-		{
-			free(name);
-			return (ft_strchr(env->envp[i], '=') + 1);
-		}
-		i++;
-	}
-	free(name);
-	return ("");
 }
 
 char	*find_filepath(t_env *env, char *filename)
@@ -450,6 +492,14 @@ int		check_cmd(t_env *env, char **args)
 	return (exec_cmd(env, args));
 }
 
+char	*get_pwd_base(t_env *env)
+{
+	char *pwd;
+
+	pwd = get_env_value(env, "PWD");
+	return (ft_strrchr(pwd, '/') + 1);
+}
+
 void	loop_shell(t_env *env)
 {
 	char	*line;
@@ -459,7 +509,9 @@ void	loop_shell(t_env *env)
 	loop = 1;
 	while (loop)
 	{
-		ft_printf("%s$> ", get_env_value(env, "USER"));
+		ft_printf("%s@", get_env_value(env, "USER"));
+		ft_printf(BOLDBLUE "%s " RESET,get_pwd_base(env));
+		ft_printf("$> ",get_pwd_base(env));
 		if (get_next_line(0, &line) < 1)
 			break;
 		args = split_line_args(line);
