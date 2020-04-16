@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/10 12:20:24 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 14:46:57 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 20:34:55 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 # include <fcntl.h>
 
 # define BOLDBLUE "\033[1m\033[36m"
+# define RED "\033[1m\033[31m"
 # define RESET "\033[0m"
 
 struct s_env;
