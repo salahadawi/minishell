@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 17:26:15 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 17:47:21 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -359,17 +359,10 @@ void	print_envs(t_env *env)
 	}
 }
 
-void	free_args(char **args)
-{
-	while (args)
-		free(args++);
-}
-
 char	**split_line_args(char *line)
 {
 	char **args;
 
-	args = (char**)ft_memalloc(sizeof(args));
 	args = ft_strsplitws(line);
 	return (args);
 }
@@ -583,11 +576,31 @@ char	*get_pwd_base(t_env *env)
 	return (ft_strrchr(pwd, '/') + 1);
 }
 
+void	free_args(char **args)
+{
+	int i;
+
+	i = 0;
+	while (args[i])
+		free(args[i++]);
+	free(args);
+}
+
+char	**split_line_commands(char *line)
+{
+	char **args;
+
+	args = ft_strsplit(line, ';');
+	return (args);
+}
+
 void	loop_shell(t_env *env)
 {
+	char	**commands;
 	char	*line;
 	char	**args;
 	int		loop;
+	int		i;
 
 	loop = 1;
 	while (loop)
@@ -597,9 +610,16 @@ void	loop_shell(t_env *env)
 		ft_printf("$> ",get_pwd_base(env));
 		if (get_next_line(0, &line) < 1)
 			break;
-		args = split_line_args(line);
-		loop = check_cmd(env, args);
-		free(args);
+		commands = split_line_commands(line);
+		i = 0;
+		while (commands[i])
+		{
+			args = split_line_args(commands[i]);
+			loop = check_cmd(env, args);
+			free_args(args);
+			free(commands[i++]);
+		}
+		free(commands);
 		free(line);
 	}
 }
