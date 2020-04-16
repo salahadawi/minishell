@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 18:05:29 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 20:45:14 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -346,7 +346,7 @@ void	init_env(t_env **env, char *envp[])
 
 	i = count_env_amount(envp);
 	(*env) = (t_env*)ft_memalloc(sizeof(t_env));
-	(*env)->envp = (char**)ft_memalloc(sizeof(char*) * i);
+	(*env)->envp = (char**)ft_memalloc(sizeof(char*) * (i + 1));
 	i = 0;
 	while (envp[i])
 	{
@@ -620,7 +620,8 @@ void	loop_shell(t_env *env)
 	loop = 1;
 	while (loop)
 	{
-		ft_printf("%s@", get_env_value(env, "USER"));
+		ft_printf(RED "%s" RESET,  get_env_value(env, "USER"));
+		ft_printf("@");
 		ft_printf(BOLDBLUE "%s " RESET,get_pwd_base(env));
 		ft_printf("$> ",get_pwd_base(env));
 		if (get_next_line(0, &line) < 1)
