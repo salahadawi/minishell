@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/10 12:20:24 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 20:34:55 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 21:54:34 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,13 +28,13 @@
 
 struct s_env;
 
-typedef int builtin_func (struct s_env*, char**);
+typedef int			t_builtin_func (struct s_env *env, char **args);
 
-typedef struct	s_env
+typedef struct		s_env
 {
 	char			**envp;
 	char			**builtin_names;
-	builtin_func	**builtin_funcs;
-}				t_env;
+	t_builtin_func	**builtin_funcs;
+}					t_env;
 
 #endif
