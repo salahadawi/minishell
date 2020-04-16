@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 17:08:24 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/16 17:26:15 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -604,11 +604,24 @@ void	loop_shell(t_env *env)
 	}
 }
 
+void	clear_screen(t_env *env)
+{
+	char **args;
+
+	args = (char**)ft_memalloc(sizeof(char*) * 2);
+	args[0] = ft_strdup("clear");
+	args[1] = NULL;
+	exec_cmd(env, args);
+	free(args[0]);
+	free(args);
+}
+
 int		main(int argc, char **argv, char *envp[])
 {
 	t_env *env;
 
 	init_env(&env, envp);
+	clear_screen(env);
 	loop_shell(env);
 	print_envs(env);
 	return (0);
