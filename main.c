@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 20:45:14 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/17 13:30:43 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,11 +61,11 @@ int		builtin_echo(t_env *env, char **args)
 		i++;
 	}
 	ft_printf("\n");
+	return (1);
 }
 
 int		builtin_exit(t_env *env, char **args)
 {
-	//maybe should free memory here??
 	exit(0);
 }
 
@@ -76,6 +76,7 @@ int		builtin_env(t_env *env, char **args)
 	i = 0;
 	while (env->envp[i])
 		ft_printf("%s\n", env->envp[i++]);
+	return (1);
 }
 
 int		check_names_match(char *var1, char *var2)
@@ -94,20 +95,10 @@ int		check_names_match(char *var1, char *var2)
 	return (0);
 }
 
-void	free_envp(char **envp)
-{
-	int i;
-
-	i = 0;
-	//while (envp[i])
-		//free(envp[i++]);
-	free(envp);
-}
-
 void	add_env(t_env *env, char *arg)
 {
-	char **new_envp;
-	int i;
+	char	**new_envp;
+	int		i;
 
 	new_envp = (char**)ft_memalloc(sizeof(char*)
 	* (count_env_amount(env->envp) + 2));
@@ -118,7 +109,7 @@ void	add_env(t_env *env, char *arg)
 		{
 			free(env->envp[i]);
 			env->envp[i] = ft_strdup(arg);
-			free_envp(new_envp);
+			free(new_envp);
 			return ;
 		}
 		else
@@ -127,7 +118,7 @@ void	add_env(t_env *env, char *arg)
 	}
 	new_envp[i] = ft_strdup(arg);
 	new_envp[i + 1] = NULL;
-	free_envp(env->envp);
+	free(env->envp);
 	env->envp = new_envp;
 }
 
@@ -176,9 +167,24 @@ int		shortcut_setenv(t_env *env, char **args)
 	return (1);
 }
 
+int		update_env(t_env *env, char **new_envp, int deleted, int i)
+{
+	if (deleted)
+	{
+		new_envp[i - deleted] = NULL;
+		//for (int j=0;new_envp[j];j++)
+			//ft_printf("%s\n", new_envp[j]);
+		free(env->envp);
+		env->envp = new_envp;
+		return (1);
+	}
+	free(new_envp);
+	return (0);
+}
+
 int		delete_env(t_env *env, char *arg)
 {
-	char **new_envp;
+	char	**new_envp;
 	int		len;
 	int		i;
 	int		deleted;
@@ -190,24 +196,16 @@ int		delete_env(t_env *env, char *arg)
 	i = 0;
 	while (env->envp[i])
 	{
-		if (!ft_strnequ(env->envp[i], arg, len))
-			new_envp[i - deleted] = env->envp[i];
-		else
+		if (ft_strnequ(env->envp[i], arg, len) && env->envp[i][len] == '=')
 		{
 			free(env->envp[i]);
 			deleted = 1;
 		}
+		else
+			new_envp[i - deleted] = env->envp[i];
 		i++;
 	}
-	if (deleted)
-	{
-		new_envp[i - deleted] = NULL;
-		free_envp(env->envp);
-		env->envp = new_envp;
-		return (1);
-	}
-	free_envp(new_envp);
-	return (0);
+	return (update_env(env, new_envp, deleted, i));
 }
 
 int		builtin_unsetenv(t_env *env, char **args)
@@ -254,7 +252,7 @@ char	*get_env_value(t_env *env, char *name)
 		i++;
 	}
 	free(name);
-	return ("");
+	return (NULL);
 }
 
 char	*store_oldpwd(t_env *env)
@@ -292,7 +290,7 @@ void	update_pwd(t_env *env)
 int		shortcut_cd(t_env *env, char **args)
 {
 	char *oldpwd;
-	
+
 	oldpwd = store_oldpwd(env);
 	if (chdir(args[0]) == -1)
 	{
@@ -307,7 +305,7 @@ int		shortcut_cd(t_env *env, char **args)
 int		builtin_cd(t_env *env, char **args)
 {
 	char *oldpwd;
-	
+
 	oldpwd = store_oldpwd(env);
 	if (!args[1])
 		chdir(get_env_value(env, "HOME"));
@@ -322,15 +320,15 @@ int		builtin_cd(t_env *env, char **args)
 
 void	init_builtins(t_env *env)
 {
-	char *builtin_names;
-	int count;
+	char	*builtin_names;
+	int		count;
 
 	builtin_names = "echo exit env setenv unsetenv cd";
 	env->builtin_names = ft_strsplit(builtin_names, ' ');
 	count = 0;
 	while (env->builtin_names[count])
 		count++;
-	env->builtin_funcs = (builtin_func**)ft_memalloc(sizeof(builtin_func*)
+	env->builtin_funcs = (t_builtin_func**)ft_memalloc(sizeof(t_builtin_func*)
 	* count);
 	env->builtin_funcs[0] = &builtin_echo;
 	env->builtin_funcs[1] = &builtin_exit;
@@ -388,25 +386,17 @@ char	*find_filepath(t_env *env, char *filename)
 	filename_len = ft_strlen(filename);
 	i = 0;
 	if (access(filename, F_OK) != -1)
-	{
-		if (access(filepath, X_OK) == -1)
-			print_error(ft_sprintf("%s: Permission denied.", filename));
 		return (filename);
-	}
+	if (!paths)
+		return (NULL);
 	while (paths[i])
 	{
 		filepath = (char*)ft_memalloc(ft_strlen(paths[i]) + filename_len + 2);
 		ft_strcpy(filepath, paths[i]);
 		ft_strcat(filepath, "/");
 		ft_strcat(filepath, filename);
-		//CHECK IF PROGRAM CAN BE EXECUTED, IF NOT DISPLAY PERMISSION ERROR
 		if (access(filepath, F_OK) != -1)
-		{
-			if (access(filepath, X_OK) == -1)
-				print_error(ft_sprintf("%s: Permission denied.", filepath));
 			return (filepath);
-
-		}
 		free(paths[i]);
 		free(filepath);
 		i++;
@@ -439,7 +429,8 @@ int		exec_cmd(t_env *env, char **args)
 			exit(1);
 		}
 		else
-			execve(filepath, args, env->envp);
+			if (execve(filepath, args, env->envp) == -1)
+				print_error(ft_sprintf("%s: Permission denied.", filepath));
 	}
 	else if (pid < 0)
 		print_error(ft_sprintf("Error forking"));
@@ -507,7 +498,6 @@ char	*expand_dollar(t_env *env, char *str, char *ptr)
 	return (expanded_str);
 }
 
-
 char	*find_dollar(const char *s)
 {
 	int i;
@@ -524,15 +514,15 @@ char	*find_dollar(const char *s)
 
 void	handle_expansion(t_env *env, char **args)
 {
-	char *ptr;
-	int i;
+	char	*ptr;
+	int		i;
 
 	i = 0;
 	while (args[i])
 	{
 		if (args[i][0] == '~')
 			args[i] = expand_tilde(env, args[i], &args[i][0]);
-		if ((ptr = ft_strchr(args[i], '~')))
+		else if ((ptr = ft_strchr(args[i], '~')))
 			args[i] = expand_tilde(env, args[i], ptr);
 		i++;
 	}
@@ -583,12 +573,14 @@ int		check_cmd(t_env *env, char **args)
 	return (exec_cmd(env, args));
 }
 
-char	*get_pwd_base(t_env *env)
+void	print_current_dir_basename(void)
 {
-	char *pwd;
+	char *path;
 
-	pwd = get_env_value(env, "PWD");
-	return (ft_strrchr(pwd, '/') + 1);
+	path = (char*)ft_memalloc(PATH_MAX + 1);
+	getcwd(path, PATH_MAX);
+	ft_printf(BOLDBLUE "%s" RESET, ft_strrchr(path, '/') + 1);
+	free(path);
 }
 
 void	free_args(char **args)
@@ -609,6 +601,14 @@ char	**split_line_commands(char *line)
 	return (args);
 }
 
+void	print_shell_info(t_env *env)
+{
+	ft_printf(RED "%s" RESET, get_env_value(env, "USER"));
+	ft_printf("@");
+	print_current_dir_basename();
+	ft_printf("$> ");
+}
+
 void	loop_shell(t_env *env)
 {
 	char	**commands;
@@ -620,12 +620,9 @@ void	loop_shell(t_env *env)
 	loop = 1;
 	while (loop)
 	{
-		ft_printf(RED "%s" RESET,  get_env_value(env, "USER"));
-		ft_printf("@");
-		ft_printf(BOLDBLUE "%s " RESET,get_pwd_base(env));
-		ft_printf("$> ",get_pwd_base(env));
+		print_shell_info(env);
 		if (get_next_line(0, &line) < 1)
-			break;
+			break ;
 		commands = split_line_commands(line);
 		i = 0;
 		while (commands[i])
