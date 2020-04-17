@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/10/22 17:38:13 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/15 22:46:27 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/17 17:27:38 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,7 @@ char		**ft_strsplitws(const char *s)
 	char	*whitespace;
 	int		i;
 
-	whitespace = " \t\n\r\v\f";
+	whitespace = " \t\n\r\v\f\"\'";
 	i = 0;
 	if (!(arr = (char**)ft_memalloc(sizeof(arr) *
 		count_strings((char*)s, whitespace) + 1)))
