@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/15 12:28:40 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/17 13:30:43 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/17 13:58:03 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,8 +172,6 @@ int		update_env(t_env *env, char **new_envp, int deleted, int i)
 	if (deleted)
 	{
 		new_envp[i - deleted] = NULL;
-		//for (int j=0;new_envp[j];j++)
-			//ft_printf("%s\n", new_envp[j]);
 		free(env->envp);
 		env->envp = new_envp;
 		return (1);
@@ -375,6 +373,16 @@ char	**split_line_args(char *line)
 	return (args);
 }
 
+char	*create_filepath(char *path, char *filename, int len)
+{
+	char *filepath;
+
+	filepath = (char*)ft_memalloc(ft_strlen(path) + len + 2);
+	ft_strcpy(filepath, path);
+	ft_strcat(filepath, "/");
+	ft_strcat(filepath, filename);
+}
+
 char	*find_filepath(t_env *env, char *filename)
 {
 	char	*filepath;
@@ -391,10 +399,7 @@ char	*find_filepath(t_env *env, char *filename)
 		return (NULL);
 	while (paths[i])
 	{
-		filepath = (char*)ft_memalloc(ft_strlen(paths[i]) + filename_len + 2);
-		ft_strcpy(filepath, paths[i]);
-		ft_strcat(filepath, "/");
-		ft_strcat(filepath, filename);
+		filepath = create_filepath(paths[i], filename, filename_len);
 		if (access(filepath, F_OK) != -1)
 			return (filepath);
 		free(paths[i]);
@@ -429,8 +434,10 @@ int		exec_cmd(t_env *env, char **args)
 			exit(1);
 		}
 		else
+		{
 			if (execve(filepath, args, env->envp) == -1)
 				print_error(ft_sprintf("%s: Permission denied.", filepath));
+		}
 	}
 	else if (pid < 0)
 		print_error(ft_sprintf("Error forking"));
@@ -603,7 +610,10 @@ char	**split_line_commands(char *line)
 
 void	print_shell_info(t_env *env)
 {
-	ft_printf(RED "%s" RESET, get_env_value(env, "USER"));
+	char *user;
+
+	if ((user = get_env_value(env, "USER")))
+		ft_printf(RED "%s" RESET, user);
 	ft_printf("@");
 	print_current_dir_basename();
 	ft_printf("$> ");
