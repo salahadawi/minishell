@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/10 12:20:24 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/16 21:54:34 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/17 13:58:34 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,5 +120,7 @@ void				print_shell_info(t_env *env);
 void				loop_shell(t_env *env);
 
 void				clear_screen(t_env *env);
+
+char				*create_filepath(char *path, char *filename, int len);
 
 #endif
