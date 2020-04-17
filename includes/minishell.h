@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/10 12:20:24 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/17 13:58:34 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/17 14:59:00 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,11 +30,14 @@ struct s_env;
 
 typedef int			t_builtin_func (struct s_env *env, char **args);
 
+typedef int			t_shortcut_func (struct s_env *env, char **args);
+
 typedef struct		s_env
 {
 	char			**envp;
 	char			**builtin_names;
 	t_builtin_func	**builtin_funcs;
+	t_shortcut_func	**shortcut_funcs;
 }					t_env;
 
 void				print_error(char *message);
@@ -67,7 +70,7 @@ char				*strsub_alphanumeric_underscore(char *str);
 
 char				*get_env_value(t_env *env, char *name);
 
-char				*store_oldpwd(t_env *env);
+char				*store_oldpwd(void);
 
 void				update_oldpwd(t_env *env, char *path);
 
@@ -122,5 +125,7 @@ void				loop_shell(t_env *env);
 void				clear_screen(t_env *env);
 
 char				*create_filepath(char *path, char *filename, int len);
+
+void				init_shortcuts(t_env *env);
 
 #endif
