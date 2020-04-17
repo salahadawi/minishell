@@ -6,17 +6,30 @@
 #    By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/04/10 19:27:20 by sadawi            #+#    #+#              #
-#    Updated: 2020/04/15 16:16:32 by sadawi           ###   ########.fr        #
+#    Updated: 2020/04/17 14:58:06 by sadawi           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = minishell
-CFILES = *.c
-#SRCS = $(addprefix srcs/, $(CFILES))
-SRCS = $(CFILES)
+
+CFILES = compare_pointers.c execute_command.c expand_input.c free_memory.c \
+get_env_info.c handle_builtins.c handle_shortcuts.c init_shell.c main.c \
+minishell.c print.c split_input.c strsub_variations.c
+
+BUILTINS = builtin_cd.c builtin_echo.c builtin_env.c builtin_exit.c \
+builtin_setenv.c builtin_unsetenv.c
+
+SHORTCUTS = shortcut_cd.c  shortcut_setenv.c
+
+SRCS = $(addprefix srcs/, $(CFILES)) $(addprefix srcs/builtins/, $(BUILTINS)) \
+$(addprefix srcs/shortcuts/, $(SHORTCUTS))
+
 OBJS = $(addprefix objs/, $(notdir $(SRCS:.c=.o)))
+
 INCLUDES = -I includes -I libft/includes
+
 FLAGS = -Wall -Wextra -Werror
+
 RUN_LIB = make -C libft/ fclean && make -C libft/
 
 all: $(NAME)
