@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/17 14:10:22 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/17 14:42:17 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/17 17:34:13 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,11 @@ int		builtin_cd(t_env *env, char **args)
 	else if (ft_strequ(args[1], "-"))
 		chdir(get_env_value(env, "OLDPWD"));
 	else
-		chdir(args[1]);
+	{
+		if (chdir(args[1]) == -1)
+			print_error(ft_sprintf("cd: no such file or directory: %s",
+			args[1]));
+	}
 	update_pwd(env);
 	update_oldpwd(env, oldpwd);
 	return (1);
