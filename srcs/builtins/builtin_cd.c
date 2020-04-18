@@ -6,7 +6,7 @@
 /*   By: sadawi <sadawi@student.hive.fi>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/17 14:10:22 by sadawi            #+#    #+#             */
-/*   Updated: 2020/04/17 17:34:13 by sadawi           ###   ########.fr       */
+/*   Updated: 2020/04/18 13:09:58 by sadawi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,8 @@ int		builtin_cd(t_env *env, char **args)
 	}
 	update_pwd(env);
 	update_oldpwd(env, oldpwd);
+	if (ft_strequ(args[1], "-"))
+		ft_printf("%s\n", get_env_value(env, "PWD"));
 	return (1);
 }
 
